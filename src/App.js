@@ -10,27 +10,42 @@ class App extends Component {
       currentPerson: ''
     };
     this.getCurrentPerson = this.getCurrentPerson.bind(this);
+    this.getAncestors = this.getAncestors.bind(this);
   }
 
   componentDidMount() {
-
       this.getCurrentPerson();
-
   }
 
   getCurrentPerson() {
     let self = this;
-    this.props.fs.get('/platform/tree/current-person', {
+    this.props.fs.get('/platform/users/current', {
       followRedirect: true
     }, function(error, response){
       if(error) {
         console.log('error', error);
       }
       else {
-        self.setState({currentPerson: response.data.persons[0].display})
+        self.setState({currentPerson: response.data.persons[0]});
+        self.getAncestors(response.data.persons[0].id);
       }
     });
   };
+
+  getAncestors(person) {
+    let self = this;
+    this.props.fs.get('/platform/tree/ancestry/?person=' + person, {
+      followRedirect: true,
+    }, function(error, response){
+      if(error) {
+        console.log('error', error);
+      }
+      else {
+        self.setState({ancestors: response.data});
+        console.log('ancestors', response.data);
+      }
+    });
+  }
 
   render() {
     return (
@@ -45,7 +60,7 @@ class App extends Component {
         {!this.state.currentPerson && <button onClick={() =>
         window.location = this.props.fs.oauthRedirectURL()
         }>Log In</button>}
-        {this.state.currentPerson && <div>You are: {this.state.currentPerson.name}</div>}
+        {this.state.currentPerson && <div>You are: {this.state.currentPerson.display.name}</div>}
       </div>
     );
   }
